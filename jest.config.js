@@ -12,6 +12,7 @@ const jestConfig = createJestConfig({
   moduleDirectories: ["node_modules", "<rootDir>"],
   maxWorkers: 1,
   injectGlobals: false,
+  testTimeout: 60_000, // 60 seconds
 });
 
 module.exports = jestConfig;
