@@ -5,6 +5,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default defineConfig([
+  pluginReact.configs.flat.recommended,
   {
     files: ["**/*.{js,mjs,cjs,jsx}"],
     plugins: { js },
@@ -14,7 +15,14 @@ export default defineConfig([
     files: ["**/*.{js,mjs,cjs,jsx}"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
-  pluginReact.configs.flat.recommended,
+  {
+    files: ["**/*.{js,mjs,cjs,jsx}"],
+    rules: {
+      "react/prop-types": "off",
+      "react/react-in-jsx-scope": "off",
+      "no-unused-vars": "warn",
+    },
+  },
   eslintConfigPrettier,
   globalIgnores([
     "**/node_modules/**",
