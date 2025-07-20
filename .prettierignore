@@ -1,0 +1,6 @@
+.github
+.swc
+node_modules
+README.md
+pnpm-lock.yaml
+package.json

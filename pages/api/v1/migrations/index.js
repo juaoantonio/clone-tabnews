@@ -7,8 +7,7 @@ const ALLOWED_METHODS = ["GET", "POST"];
 export default async function migrations(req, res) {
   if (!ALLOWED_METHODS.includes(req.method)) {
     return res.status(405).json({
-      error:
-        `Method ${req.method} not allowed. Allowed methods are: GET, POST.`,
+      error: `Method ${req.method} not allowed. Allowed methods are: GET, POST.`,
     });
   }
 
