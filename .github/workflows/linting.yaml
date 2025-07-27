@@ -1,4 +1,4 @@
-name: Linting (Prettier & ESLint)
+name: Linting (Prettier & ESLint & Commitlint)
 
 on: pull_request
 
