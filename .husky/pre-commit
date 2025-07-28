@@ -1,0 +1,1 @@
+detect-secrets-launcher components/* infra/* pages/* tests/*
