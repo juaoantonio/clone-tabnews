@@ -1,0 +1,1 @@
+echo "🔍 Verificando por segredos nos arquivos com Secretlint..." && pnpm exec secretlint --secretlintrc .secretlintrc.json $(git diff --cached --name-only) && echo "✅ Verificação de segredos concluída com sucesso."
