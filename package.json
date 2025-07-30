@@ -4,8 +4,8 @@
   "description": "Clone do WebApp TabNews do Filipe Deschamps",
   "main": "index.js",
   "scripts": {
-    "dev": "npm run services:up:wait && npm run migration:up && next dev",
-    "test": "npm run services:up && concurrently -n next,jest --hide next -k -s command-jest \"next dev\" \"jest --runInBand --verbose\"",
+    "dev": "trap \"pnpm run services:stop\" INT EXIT; pnpm run services:up:wait && pnpm run migrations:up && next dev",
+    "test": "trap \"pnpm run services:stop\" INT EXIT; pnpm run services:up && concurrently -n next,jest --hide next -k -s command-jest \"next dev\" \"jest --runInBand --verbose\"",
     "test:watch": "jest --watch --runInBand",
     "services:up": "docker compose -f infra/compose.yaml up -d",
     "services:up:wait": "docker compose -f infra/compose.yaml up -d --wait",
