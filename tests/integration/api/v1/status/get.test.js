@@ -1,28 +1,32 @@
-import { beforeAll, expect, test } from "@jest/globals";
+import { beforeAll, describe, expect, test } from "@jest/globals";
 import orchestrator from "../../../../orchestrator";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
 });
 
-test("GET to /api/v1/status should return 200", async () => {
-  const response = await fetch("http://localhost:3000/api/v1/status");
-  expect(response.status).toBe(200);
+describe("GET /api/v1/status", () => {
+  describe("Anonymous user", () => {
+    test("Retrieving system status", async () => {
+      const response = await fetch("http://localhost:3000/api/v1/status");
+      expect(response.status).toBe(200);
 
-  const responseBody = await response.json();
-  expect(responseBody.updated_at).toBeDefined();
+      const responseBody = await response.json();
+      expect(responseBody.updated_at).toBeDefined();
 
-  const {
-    updated_at,
-    dependencies: { version, max_connections, opened_connections },
-  } = responseBody;
+      const {
+        updated_at,
+        dependencies: { version, max_connections, opened_connections },
+      } = responseBody;
 
-  const parsedUpdatedAt = new Date(responseBody.updated_at).toISOString();
-  expect(updated_at).toEqual(parsedUpdatedAt);
+      const parsedUpdatedAt = new Date(responseBody.updated_at).toISOString();
+      expect(updated_at).toEqual(parsedUpdatedAt);
 
-  expect(version).toBeTruthy();
+      expect(version).toBeTruthy();
 
-  expect(max_connections).toBeGreaterThan(0);
+      expect(max_connections).toBeGreaterThan(0);
 
-  expect(opened_connections).toEqual(1);
+      expect(opened_connections).toEqual(1);
+    });
+  });
 });
