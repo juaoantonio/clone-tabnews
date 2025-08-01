@@ -16,16 +16,15 @@ describe("GET /api/v1/status", () => {
 
       const {
         updated_at,
-        dependencies: { version, max_connections, opened_connections },
+        dependencies: {
+          database: { version, max_connections, opened_connections },
+        },
       } = responseBody;
+      const parsedUpdatedAt = new Date(updated_at).toISOString();
 
-      const parsedUpdatedAt = new Date(responseBody.updated_at).toISOString();
       expect(updated_at).toEqual(parsedUpdatedAt);
-
       expect(version).toBeTruthy();
-
       expect(max_connections).toBeGreaterThan(0);
-
       expect(opened_connections).toEqual(1);
     });
   });
