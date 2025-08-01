@@ -21,9 +21,11 @@ async function status(req, res) {
   res.status(200).json({
     updated_at: updatedAt,
     dependencies: {
-      version,
-      max_connections: +maxConnections,
-      opened_connections: databaseOpenedConnections,
+      database: {
+        version,
+        max_connections: +maxConnections,
+        opened_connections: databaseOpenedConnections,
+      },
     },
   });
 }
