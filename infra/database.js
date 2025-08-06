@@ -1,6 +1,7 @@
 import { Client } from "pg";
 import { resolve } from "node:path";
 import migrationRunner from "node-pg-migrate";
+import { ServiceUnavailableError } from "./errors";
 
 async function query(queryObject) {
   let client;
@@ -9,8 +10,11 @@ async function query(queryObject) {
     const result = await client.query(queryObject);
     return result;
   } catch (error) {
-    console.error(error);
-    throw error;
+    const publicError = new ServiceUnavailableError({
+      cause: error,
+    });
+    console.error(publicError);
+    throw publicError;
   } finally {
     await client?.end();
   }
@@ -50,8 +54,11 @@ async function migrationRun(options) {
       dbClient,
     });
   } catch (error) {
-    console.error(error);
-    throw error;
+    const publicError = new ServiceUnavailableError({
+      cause: error,
+    });
+    console.error(publicError);
+    throw publicError;
   } finally {
     dbClient?.end();
   }

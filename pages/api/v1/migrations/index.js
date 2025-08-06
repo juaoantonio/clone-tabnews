@@ -1,5 +1,9 @@
 import { createRouter } from "next-connect";
-import { InternalServerError, MethodNotAllowedError } from "infra/errors";
+import {
+  InternalServerError,
+  MethodNotAllowedError,
+  ServiceUnavailableError,
+} from "infra/errors";
 import database from "infra/database";
 
 const router = createRouter();
@@ -12,9 +16,14 @@ function onNoMatchHandler(req, res) {
 }
 
 function onNoErrorHandler(err, req, res) {
-  const publicError = new InternalServerError({
-    cause: err,
-  });
+  let publicError;
+  if (err instanceof ServiceUnavailableError) {
+    publicError = err;
+  } else {
+    publicError = new InternalServerError({
+      cause: err,
+    });
+  }
   console.error(publicError);
   res.status(publicError.statusCode).json(publicError);
 }

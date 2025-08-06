@@ -1,5 +1,9 @@
 import database from "infra/database.js";
-import { InternalServerError, MethodNotAllowedError } from "infra/errors.js";
+import {
+  InternalServerError,
+  MethodNotAllowedError,
+  ServiceUnavailableError,
+} from "infra/errors.js";
 import { createRouter } from "next-connect";
 
 const router = createRouter();
@@ -10,17 +14,22 @@ function onNoMatchHandler(req, res) {
   res.status(publicError.statusCode).json(publicError);
 }
 
-function onNoErrorHandler(err, req, res) {
-  const publicError = new InternalServerError({
-    cause: err,
-  });
+function onErrorHandler(err, req, res) {
+  let publicError;
+  if (err instanceof ServiceUnavailableError) {
+    publicError = err;
+  } else {
+    publicError = new InternalServerError({
+      cause: err,
+    });
+  }
   console.error(publicError);
   res.status(publicError.statusCode).json(publicError);
 }
 
 export default router.handler({
   onNoMatch: onNoMatchHandler,
-  onError: onNoErrorHandler,
+  onError: onErrorHandler,
 });
 
 async function getHandler(req, res) {
