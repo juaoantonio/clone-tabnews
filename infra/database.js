@@ -1,4 +1,7 @@
 import { Client } from "pg";
+import { resolve } from "node:path";
+import migrationRunner from "node-pg-migrate";
+import { ServiceUnavailableError } from "./errors";
 
 async function query(queryObject) {
   let client;
@@ -7,8 +10,12 @@ async function query(queryObject) {
     const result = await client.query(queryObject);
     return result;
   } catch (error) {
-    console.error(error);
-    throw error;
+    const serviceUnavailableError = new ServiceUnavailableError({
+      message: "Não foi possível conectar ao banco de dados.",
+      cause: error,
+    });
+    console.error(serviceUnavailableError);
+    throw serviceUnavailableError;
   } finally {
     await client?.end();
   }
@@ -29,9 +36,41 @@ async function getNewClient() {
   return client;
 }
 
+function getDefaultMigrationOptions() {
+  return {
+    dryRun: true,
+    dir: resolve("infra", "migrations"),
+    direction: "up",
+    verbose: true,
+    migrationsTable: "pgmigrations",
+  };
+}
+
+async function migrationRun(options) {
+  let dbClient;
+  try {
+    dbClient = await database.getNewClient();
+    return await migrationRunner({
+      ...options,
+      dbClient,
+    });
+  } catch (error) {
+    const serviceUnavailableError = new ServiceUnavailableError({
+      message: "Não foi possível conectar ao banco de dados.",
+      cause: error,
+    });
+    console.error(serviceUnavailableError);
+    throw serviceUnavailableError;
+  } finally {
+    dbClient?.end();
+  }
+}
+
 const database = {
-  query,
   getNewClient,
+  query,
+  getDefaultMigrationOptions,
+  migrationRun,
 };
 
 export default database;
