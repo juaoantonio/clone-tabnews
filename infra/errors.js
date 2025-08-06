@@ -1,11 +1,11 @@
 export class InternalServerError extends Error {
-  constructor({ cause }) {
+  constructor({ cause, statusCode }) {
     super("Um erro interno não esperado ocorreu.", {
       cause,
     });
     this.name = "InternalServerError";
     this.action = "Tente novamente mais tarde ou contate o suporte.";
-    this.statusCode = 500;
+    this.statusCode = statusCode || 500;
   }
 
   toJSON() {
@@ -37,10 +37,12 @@ export class MethodNotAllowedError extends Error {
 }
 
 export class ServiceUnavailableError extends Error {
-  constructor() {
-    super("O serviço está indisponível.");
+  constructor({ cause, message, action } = {}) {
+    super(message || "O serviço está temporariamente indisponível.", {
+      cause,
+    });
     this.name = "ServiceUnavailableError";
-    this.action = "Tente novamente mais tarde.";
+    this.action = action || "Tente novamente mais tarde.";
     this.statusCode = 503;
   }
 

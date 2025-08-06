@@ -1,8 +1,4 @@
-import {
-  InternalServerError,
-  MethodNotAllowedError,
-  ServiceUnavailableError,
-} from "./errors";
+import { InternalServerError, MethodNotAllowedError } from "./errors";
 
 function onNoMatchHandler(req, res) {
   const publicError = new MethodNotAllowedError();
@@ -10,14 +6,11 @@ function onNoMatchHandler(req, res) {
 }
 
 function onErrorHandler(err, req, res) {
-  let publicError;
-  if (err instanceof ServiceUnavailableError) {
-    publicError = err;
-  } else {
-    publicError = new InternalServerError({
-      cause: err,
-    });
-  }
+  const publicError = new InternalServerError({
+    statusCode: err.statusCode,
+    cause: err,
+  });
+
   console.error(publicError);
   res.status(publicError.statusCode).json(publicError);
 }

@@ -10,11 +10,12 @@ async function query(queryObject) {
     const result = await client.query(queryObject);
     return result;
   } catch (error) {
-    const publicError = new ServiceUnavailableError({
+    const serviceUnavailableError = new ServiceUnavailableError({
+      message: "Não foi possível conectar ao banco de dados.",
       cause: error,
     });
-    console.error(publicError);
-    throw publicError;
+    console.error(serviceUnavailableError);
+    throw serviceUnavailableError;
   } finally {
     await client?.end();
   }
@@ -54,11 +55,12 @@ async function migrationRun(options) {
       dbClient,
     });
   } catch (error) {
-    const publicError = new ServiceUnavailableError({
+    const serviceUnavailableError = new ServiceUnavailableError({
+      message: "Não foi possível conectar ao banco de dados.",
       cause: error,
     });
-    console.error(publicError);
-    throw publicError;
+    console.error(serviceUnavailableError);
+    throw serviceUnavailableError;
   } finally {
     dbClient?.end();
   }
