@@ -1,51 +1,45 @@
-import migrationRunner from "node-pg-migrate";
-import { resolve } from "node:path";
+import { createRouter } from "next-connect";
+import { InternalServerError, MethodNotAllowedError } from "infra/errors";
 import database from "infra/database";
 
-const ALLOWED_METHODS = ["GET", "POST"];
+const router = createRouter();
+router.get(getHandler);
+router.post(postHandler);
 
-export default async function migrations(req, res) {
-  if (!ALLOWED_METHODS.includes(req.method)) {
-    return res.status(405).json({
-      error: `Method ${req.method} not allowed. Allowed methods are: GET, POST.`,
-    });
+function onNoMatchHandler(req, res) {
+  const publicError = new MethodNotAllowedError();
+  res.status(publicError.statusCode).json(publicError);
+}
+
+function onNoErrorHandler(err, req, res) {
+  const publicError = new InternalServerError({
+    cause: err,
+  });
+  console.error(publicError);
+  res.status(publicError.statusCode).json(publicError);
+}
+
+export default router.handler({
+  onNoMatch: onNoMatchHandler,
+  onError: onNoErrorHandler,
+});
+
+async function getHandler(req, res) {
+  const pendingMigrations = await database.migrationRun(
+    database.getDefaultMigrationOptions(),
+  );
+  return res.status(200).json(pendingMigrations);
+}
+
+async function postHandler(req, res) {
+  const pendingMigrations = await database.migrationRun({
+    ...database.getDefaultMigrationOptions(),
+    dryRun: false,
+  });
+
+  if (pendingMigrations.length === 0) {
+    return res.status(200).json(pendingMigrations);
   }
 
-  let dbClient;
-  try {
-    dbClient = await database.getNewClient();
-    const defaultMigrationOptions = {
-      dbClient,
-      dryRun: true,
-      dir: resolve("infra", "migrations"),
-      direction: "up",
-      verbose: true,
-      migrationsTable: "pgmigrations",
-    };
-
-    const reqMethod = req.method;
-
-    if (reqMethod === "GET") {
-      const pendingMigrations = await migrationRunner(defaultMigrationOptions);
-
-      return res.status(200).json(pendingMigrations);
-    }
-
-    if (reqMethod === "POST") {
-      const migratedMigrations = await migrationRunner({
-        ...defaultMigrationOptions,
-        dryRun: false,
-      });
-
-      const created = migratedMigrations.length > 0;
-      const status = created ? 201 : 200;
-
-      return res.status(status).json(migratedMigrations);
-    }
-  } catch (error) {
-    console.error("Error running migrations:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  } finally {
-    if (dbClient) dbClient.end();
-  }
+  return res.status(201).json(pendingMigrations);
 }
