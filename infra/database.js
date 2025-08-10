@@ -5,7 +5,7 @@ async function query(queryObject) {
   let client;
   try {
     client = await getNewClient();
-    const result = client.query(queryObject);
+    const result = await client.query(queryObject);
     return result;
   } catch (error) {
     const serviceUnavailableError = new ServiceUnavailableError({
