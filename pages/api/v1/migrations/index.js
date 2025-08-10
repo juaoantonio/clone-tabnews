@@ -1,6 +1,6 @@
 import { createRouter } from "next-connect";
-import database from "infra/database";
 import controller from "infra/controller";
+import migrator from "../../../../models/migrator";
 
 const router = createRouter();
 router.get(getHandler);
@@ -9,17 +9,12 @@ router.post(postHandler);
 export default router.handler(controller.errorHandlers);
 
 async function getHandler(req, res) {
-  const pendingMigrations = await database.migrationRun(
-    database.getDefaultMigrationOptions(),
-  );
+  const pendingMigrations = await migrator.listPendingMigrations();
   return res.status(200).json(pendingMigrations);
 }
 
 async function postHandler(req, res) {
-  const pendingMigrations = await database.migrationRun({
-    ...database.getDefaultMigrationOptions(),
-    dryRun: false,
-  });
+  const pendingMigrations = await migrator.runPendingMigrations();
 
   if (pendingMigrations.length === 0) {
     return res.status(200).json(pendingMigrations);
