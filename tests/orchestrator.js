@@ -19,13 +19,13 @@ async function waitForAllServices() {
   }
 }
 
-async function cleanDatabase() {
+async function clearDatabase() {
   await database.query("drop schema public cascade; create schema public;");
 }
 
 const orchestrator = {
   waitForAllServices,
-  clearDatabase: cleanDatabase,
+  clearDatabase,
 };
 
 export default orchestrator;
