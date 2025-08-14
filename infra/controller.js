@@ -1,4 +1,8 @@
-import { InternalServerError, MethodNotAllowedError } from "./errors";
+import {
+  InternalServerError,
+  MethodNotAllowedError,
+  ValidationError,
+} from "./errors";
 
 function onNoMatchHandler(req, res) {
   const publicError = new MethodNotAllowedError();
@@ -6,6 +10,9 @@ function onNoMatchHandler(req, res) {
 }
 
 function onErrorHandler(err, req, res) {
+  if (err instanceof ValidationError) {
+    return res.status(err.statusCode).json(err);
+  }
   const publicError = new InternalServerError({
     statusCode: err.statusCode,
     cause: err,
