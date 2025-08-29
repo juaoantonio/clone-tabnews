@@ -1,6 +1,13 @@
 {
   "compilerOptions": {
-    "baseUrl": "./"
+    "baseUrl": "./",
+    "paths": {
+      "@pages/*": ["pages/*"],
+      "@infra/*": ["infra/*"],
+      "@models/*": ["models/*"],
+      "@tests/*": ["tests/*"],
+      "@components/*": ["components/*"]
+    }
   },
   "typeAcquisition": {
     "include": ["jest"]

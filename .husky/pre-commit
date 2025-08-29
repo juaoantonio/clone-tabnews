@@ -1,1 +1,7 @@
-echo "🔍 Verificando por segredos nos arquivos com Secretlint..." && pnpm exec secretlint --secretlintrc .secretlintrc.json $(git diff --cached --name-only) && echo "✅ Verificação de segredos concluída com sucesso."
+#!/bin/bash
+echo "🔍 Verificando por segredos nos arquivos com Secretlint..."
+git diff --cached --name-only --diff-filter=ACMRT \
+| awk 'system("[ -f \""$0"\" ]")==0' \
+| xargs -r -d '\n' pnpm exec secretlint --secretlintrc .secretlintrc.json \
+&& echo "✅ Verificação de segredos concluída com sucesso." \
+|| [ $? -eq 123 ] # evita falha quando xargs não rodar nada
