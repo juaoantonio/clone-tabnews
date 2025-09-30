@@ -29,11 +29,12 @@ describe("GET /api/v1/users/[username]", () => {
         id: responseBody.id,
         username: "MatchCase",
         email: "match.case@gmail.com",
-        password: "senha1",
+        password: responseBody.password,
         created_at: responseBody.created_at,
         updated_at: responseBody.updated_at,
       });
     });
+
     test("With not exact case match", async () => {
       const response = await fetch(
         "http://localhost:3000/api/v1/users/matchcase",
@@ -44,11 +45,12 @@ describe("GET /api/v1/users/[username]", () => {
         id: responseBody.id,
         username: "MatchCase",
         email: "match.case@gmail.com",
-        password: "senha1",
+        password: responseBody.password,
         created_at: responseBody.created_at,
         updated_at: responseBody.updated_at,
       });
     });
+
     test("With non existant username", async () => {
       const response = await fetch(
         "http://localhost:3000/api/v1/users/notfound",
