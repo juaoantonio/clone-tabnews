@@ -1,7 +1,49 @@
-#!/bin/bash
-echo "🔍 Verificando por segredos nos arquivos com Secretlint..."
-git diff --cached --name-only --diff-filter=ACMRT \
-| awk 'system("[ -f \""$0"\" ]")==0' \
-| xargs -r -d '\n' pnpm exec secretlint --secretlintrc .secretlintrc.json \
-&& echo "✅ Verificação de segredos concluída com sucesso." \
-|| [ $? -eq 123 ] # evita falha quando xargs não rodar nada
+#!/bin/sh
+set -eu
+
+echo "🔍 Verificando por segredos com Secretlint..."
+
+# 1) colete a lista NUL-delimitada dos arquivos staged
+tmp_list="$(mktemp)"
+git diff --cached --name-only -z --diff-filter=ACMRT > "$tmp_list"
+
+# se não há nada, saia com sucesso
+if [ ! -s "$tmp_list" ]; then
+  echo "ℹ️ Nenhum arquivo elegível nas mudanças staged. Pulando Secretlint."
+  rm -f "$tmp_list"
+  exit 0
+fi
+
+# 2) filtre apenas os caminhos que existem como arquivos regulares
+tmp_files="$(mktemp)"
+# IMPORTANTE: passe {} como argumento para que $1 exista dentro do sh -c
+xargs -0 -I{} sh -c '
+  p=$1
+  if [ -f "$p" ]; then
+    # imprima o caminho terminado em NUL para encadear outro xargs -0
+    printf "%s\0" "$p"
+  fi
+' _ {} < "$tmp_list" > "$tmp_files"
+
+# se após o filtro não sobrou nada, saia com sucesso
+if [ ! -s "$tmp_files" ]; then
+  echo "ℹ️ Não há arquivos de fato presentes para verificar. Pulando Secretlint."
+  rm -f "$tmp_list" "$tmp_files"
+  exit 0
+fi
+
+# 3) execute o secretlint nos arquivos (NUL-delimitados)
+if xargs -0 pnpm exec secretlint --secretlintrc .secretlintrc.json < "$tmp_files"; then
+  echo "✅ Verificação de segredos concluída com sucesso."
+  rm -f "$tmp_list" "$tmp_files"
+  exit 0
+else
+  status=$?
+  if [ "$status" -eq 1 ]; then
+    echo "❌ Segredos suspeitos encontrados. Corrija antes do commit."
+  else
+    echo "💥 Erro ao executar o Secretlint (exit $status)."
+  fi
+  rm -f "$tmp_list" "$tmp_files"
+  exit "$status"
+fi
