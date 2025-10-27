@@ -1,6 +1,7 @@
-import orchestrator from "tests/orchestrator";
+import orchestrator from "tests/orchestrator.js";
 import { version as uuidVersion } from "uuid";
-import database from "@infra/database";
+import database from "@infra/database.js";
+import password from "models/password.js";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -28,7 +29,7 @@ describe("POST /api/v1/users", () => {
         id: responseBody.id,
         username: "juaoantonio",
         email: "joaom@gmail.com",
-        password: "senha1",
+        password: responseBody.password,
         created_at: responseBody.created_at,
         updated_at: responseBody.updated_at,
       });
@@ -45,7 +46,16 @@ describe("POST /api/v1/users", () => {
       expect(uuidVersion(createdUser.id)).toBe(4);
       expect(createdUser.username).toBe("juaoantonio");
       expect(createdUser.email).toBe("joaom@gmail.com");
-      expect(createdUser.password).toBe("senha1");
+      const isPasswordCorrect = await password.compare(
+        "senha1",
+        createdUser.password,
+      );
+      const isPasswordIncorrect = await password.compare(
+        "senha2",
+        createdUser.password,
+      );
+      expect(isPasswordCorrect).toBe(true);
+      expect(isPasswordIncorrect).toBe(false);
       expect(Date.parse(createdUser.created_at)).not.toBeNaN();
       expect(Date.parse(createdUser.updated_at)).not.toBeNaN();
     });
@@ -79,7 +89,7 @@ describe("POST /api/v1/users", () => {
       expect(response2Body).toEqual({
         name: "ValidationError",
         message: "Esse email já está cadastrado.",
-        action: "Use um email diferente no cadastro.",
+        action: "Use um email diferente para essa ação.",
         status_code: 400,
       });
     });
@@ -113,7 +123,7 @@ describe("POST /api/v1/users", () => {
       expect(response2Body).toEqual({
         name: "ValidationError",
         message: "Esse username já está cadastrado.",
-        action: "Use um username diferente no cadastro.",
+        action: "Use um username diferente para essa ação.",
         status_code: 400,
       });
     });

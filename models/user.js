@@ -1,4 +1,5 @@
-import database from "@infra/database";
+import database from "@infra/database.js";
+import password from "models/password.js";
 import { NotFoundError, ValidationError } from "@infra/errors";
 
 async function findOneByUsername(username) {
@@ -31,49 +32,10 @@ async function findOneByUsername(username) {
 }
 
 async function create(userInputValues) {
+  await validateUniqueUsername(userInputValues.username);
   await validateEmail(userInputValues.email);
-  await validateUsername(userInputValues.username);
+  await hashPasswordInObject(userInputValues);
   return await insertUser(userInputValues);
-
-  async function validateEmail(email) {
-    const result = await database.query({
-      text: `
-        SELECT
-              email
-        FROM
-              users
-        WHERE 
-            lower(email) = lower($1)
-              ;`,
-      values: [email],
-    });
-    if (result.rowCount > 0) {
-      throw new ValidationError({
-        message: "Esse email já está cadastrado.",
-        action: "Use um email diferente no cadastro.",
-      });
-    }
-  }
-
-  async function validateUsername(username) {
-    const result = await database.query({
-      text: `
-        SELECT
-              username
-        FROM
-              users
-        WHERE 
-            lower(username) = lower($1)
-              ;`,
-      values: [username],
-    });
-    if (result.rowCount > 0) {
-      throw new ValidationError({
-        message: "Esse username já está cadastrado.",
-        action: "Use um username diferente no cadastro.",
-      });
-    }
-  }
 
   async function insertUser(userInputValues) {
     const result = await database.query({
@@ -94,9 +56,104 @@ async function create(userInputValues) {
   }
 }
 
+async function updateByUsername(username, userPatchData) {
+  const currentUser = await findOneByUsername(username);
+  if (
+    "username" in userPatchData &&
+    !compareCaseInsensitive(username, userPatchData.username)
+  ) {
+    await validateUniqueUsername(userPatchData.username);
+  }
+  if ("email" in userPatchData) {
+    await validateEmail(userPatchData.email);
+  }
+
+  if ("password" in userPatchData) {
+    await hashPasswordInObject(userPatchData);
+  }
+
+  const updatedUser = {
+    ...currentUser,
+    ...userPatchData,
+  };
+
+  const result = await database.query({
+    text: `
+      UPDATE 
+        users 
+      SET
+        username=$2,
+        email=$3,
+        password=$4,
+        updated_at=timezone('utc', now())
+      WHERE 
+          id = $1
+      RETURNING
+          *
+      ;`,
+    values: [
+      updatedUser.id,
+      updatedUser.username,
+      updatedUser.email,
+      updatedUser.password,
+    ],
+  });
+
+  return result.rows[0];
+
+  function compareCaseInsensitive(a, b) {
+    return a.toLowerCase() === b.toLowerCase();
+  }
+}
+
+async function validateUniqueUsername(username) {
+  const result = await database.query({
+    text: `
+        SELECT
+              username
+        FROM
+              users
+        WHERE 
+            lower(username) = lower($1)
+              ;`,
+    values: [username],
+  });
+  if (result.rowCount > 0) {
+    throw new ValidationError({
+      message: "Esse username já está cadastrado.",
+      action: "Use um username diferente para essa ação.",
+    });
+  }
+}
+
+async function validateEmail(email) {
+  const result = await database.query({
+    text: `
+        SELECT
+              email
+        FROM
+              users
+        WHERE 
+            lower(email) = lower($1)
+              ;`,
+    values: [email],
+  });
+  if (result.rowCount > 0) {
+    throw new ValidationError({
+      message: "Esse email já está cadastrado.",
+      action: "Use um email diferente para essa ação.",
+    });
+  }
+}
+
+async function hashPasswordInObject(userInputValues) {
+  userInputValues.password = await password.hash(userInputValues.password);
+}
+
 const user = {
   create,
   findOneByUsername,
+  updateByUsername,
 };
 
 export default user;
