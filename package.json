@@ -44,6 +44,7 @@
   "devDependencies": {
     "@commitlint/cli": "19.4.0",
     "@commitlint/config-conventional": "19.8.1",
+    "@faker-js/faker": "9.7.0",
     "@jest/globals": "29.7.0",
     "@secretlint/secretlint-rule-aws": "10.2.1",
     "@secretlint/secretlint-rule-preset-recommend": "10.2.1",
